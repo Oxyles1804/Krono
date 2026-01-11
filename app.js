@@ -266,6 +266,8 @@ stopBtn.onclick = () => {
   slider.classList.remove("hidden");
   markBtn.classList.remove("hidden");
   document.getElementById("results").classList.remove("hidden");
+  frameControls.classList.remove("hidden"); // ✅ IMPORTANT
+
 
   // Configurer slider
   slider.max = frames.length - 1;
@@ -318,6 +320,7 @@ slider.oninput = () => {
 
 // ======== Marquage des temps ========
 markBtn.onclick = () => {
+  console.log("🟢 MARK CLICK", currentFrame, frameTimes[currentFrame]);
   if (!frameTimes[currentFrame]) return;
 
   const time = frameTimes[currentFrame];
@@ -342,5 +345,6 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
