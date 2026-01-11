@@ -18,7 +18,7 @@ const stopBtn = document.getElementById("stop");
 
 ////////////////////////////////////
 const slider = document.getElementById("slider");
-const goOffset = 200; // décalage en ms, positif = chrono démarre après le son, négatif = avant le son
+const goOffset = 400; // décalage en ms, positif = chrono démarre après le son, négatif = avant le son
 
 const markBtn = document.getElementById("mark");
 const resultsTable = document.querySelector("#results tbody");
@@ -78,10 +78,13 @@ socket.onmessage = async (event) => {
   // 🏁 TÉLÉPHONE ARRIVÉE = CHRONO UNIQUEMENT
   if (role === "arrivee" && msg === "GO_NOW") {
     console.log("⏱️ GO → chrono");
-
-    startTime = performance.now();
-    timerInterval = setInterval(updateTime, 10);
-    captureLoop = setInterval(captureFrame, 1000 / FPS);
+    
+    setTimeout(() => {
+      startTime = performance.now();
+      captureFrame();
+      timerInterval = setInterval(updateTime, 10);
+      captureLoop = setInterval(captureFrame, 1000 / FPS);
+    },goOffset);
   }
 };
 
@@ -346,6 +349,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
