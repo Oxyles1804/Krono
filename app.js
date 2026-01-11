@@ -48,7 +48,7 @@ const soundGo = new Audio("go.mp3");
 soundGo.load();
 
 // ================== WEBSOCKET ==================
-const socket = new WebSocket("ws://192.168.0.48:8080"); // 🔴 CHANGE L'IP
+const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHANGE L'IP
 
 socket.onopen = () => console.log("✅ WebSocket connecté");
 
@@ -338,3 +338,4 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
