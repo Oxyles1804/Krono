@@ -18,7 +18,7 @@ const stopBtn = document.getElementById("stop");
 
 ////////////////////////////////////
 const slider = document.getElementById("slider");
-const goOffset = 400; // décalage en ms, positif = chrono démarre après le son, négatif = avant le son
+const goOffset = 450; // décalage en ms, positif = chrono démarre après le son, négatif = avant le son
 
 const markBtn = document.getElementById("mark");
 const resultsTable = document.querySelector("#results tbody");
@@ -349,6 +349,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
