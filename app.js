@@ -95,6 +95,7 @@ const FPS = 60;
 let frames = [];
 let frameTimes = [];
 let currentFrame = 0;
+let results = [];
 
 ///////////////////////
 //cacher le canvas au début
@@ -233,6 +234,9 @@ startBtn.onclick = async () => {
     return;
   }
 
+  results = [];
+  resultsTable.innerHTML = "";
+  
   if (role === "arrivee") {    
     video.classList.remove("hidden");
     canvas.classList.add("hidden");
@@ -338,4 +342,5 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
