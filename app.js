@@ -3,6 +3,7 @@
  * © 2026 Ilyes ECHAOUI
  * Tous droits réservés.
  */
+console.log("✅ app.js chargé");
 
 // ================== ÉLÉMENTS ==================
 const video = document.getElementById("video");
@@ -345,6 +346,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
