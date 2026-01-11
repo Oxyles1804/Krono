@@ -1,0 +1,78 @@
+<!--
+Sprint Chrono – Chronomètre de sprint
+© 2026 Ilyes ECHAOUI
+Tous droits réservés.
+
+Ne pas reproduire, distribuer ou modifier sans autorisation.
+
+Version : 1.0
+-->
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krono</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Krono</h1>
+
+  <div class="video-container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas" class="hidden"></canvas>
+  </div>
+
+  <div id="time">0.000</div>
+
+
+<div id="controlsContainer" class="controls">
+  <button id="start">START</button>
+  <button id="stop">STOP</button>
+  <input type="range" id="slider" min="0" value="0" class="hidden">
+
+  <div class="controls hidden" id="frameControls">
+    <button id="back1">-1 frames</button>
+    <button id="forward1">+1 frames</button>
+  </div>
+</div>
+
+<div id="roleSelect">
+  <button id="roleDepart">Téléphone Départ</button>
+  <button id="roleArrivee">Téléphone Arrivée</button>
+</div>
+
+<button id="unlockAudio" class="hidden">
+  🔊 Activer le son
+</button>
+
+
+
+<div id="log" style="color: yellow; text-align: left; max-height: 150px; overflow-y: auto; background: #222; padding: 10px; margin: 10px;"></div>
+
+
+<button id="mark" class="hidden">MARQUER</button>
+
+<table id="results" class="hidden">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Temps (s)</th>
+      <th>Athlète</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<footer style="margin-top:20px; font-size:0.8em; color:#888;">
+  © 2026 Ilyes ECHAOUI – Tous droits réservés
+</footer>
+
+
+  <script src="app.js"></script>
+</body>
+</html>
