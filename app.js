@@ -33,6 +33,16 @@ const roleSelect = document.getElementById("roleSelect");
 const unlockBtn = document.getElementById("unlockAudio");
 let audioUnlocked = false;
 
+const roomMenu = document.getElementById("roomMenu");
+const roomNameInput = document.getElementById("roomName");
+const roomPasswordInput = document.getElementById("roomPassword");
+const createRoomBtn = document.getElementById("createRoomBtn");
+const joinRoomBtn = document.getElementById("joinRoomBtn");
+
+let currentRoom = null;
+let currentRoomPassword = null;
+
+
 // ================== RÔLE ==================
 let role = null; // "depart" | "arrivee"
 
@@ -306,3 +316,37 @@ back1.onclick = () => { currentFrame = Math.max(0, currentFrame - FRAME_STEP); s
 forward1.onclick = () => { currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP); showFrame(); };
 
 function showRole() { timeDisplay.textContent = role === "depart" ? "📍 DÉPART" : "🏁 ARRIVÉE"; }
+
+
+createRoomBtn.onclick = () => {
+  const name = roomNameInput.value.trim();
+  const pass = roomPasswordInput.value.trim();
+  if(!/^[a-zA-Z0-9]+$/.test(name)) return alert("Nom de room invalide");
+  if(!/^[a-zA-Z0-9]{4,}$/.test(pass)) return alert("Mot de passe invalide (min 4 caractères)");
+  currentRoom = name;
+  currentRoomPassword = pass;
+  roomMenu.style.display = "none";
+  roleSelect.style.display = "block";
+};
+
+joinRoomBtn.onclick = () => {
+  const name = roomNameInput.value.trim();
+  const pass = roomPasswordInput.value.trim();
+  if(!name || !pass) return alert("Remplis tous les champs");
+  currentRoom = name;
+  currentRoomPassword = pass;
+  roomMenu.style.display = "none";
+  roleSelect.style.display = "block";
+};
+
+
+function sendToRoom(type, payload=null){
+    if(!currentRoom || !currentRoomPassword) return;
+    socket.send(JSON.stringify({
+        room: currentRoom,
+        password: currentRoomPassword,
+        type: type,
+        payload: payload
+    }));
+}
+
