@@ -182,49 +182,64 @@ input[type="text"] {
 }
 
 
-/* ======= Formulaire création/rejoindre room ======= */
-#groupForm {
+/* ======= Formulaires création / rejoindre room ======= */
+#createRoomForm,
+#joinRoomForm {
   background: #333;
   padding: 15px;
   border-radius: 8px;
-  margin-bottom: 10px;
-  display: inline-block;
+  margin: 10px auto;
+  display: none; /* hidden par défaut, géré par JS */
+  max-width: 320px;
   text-align: left;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-#groupForm label {
-  display: block;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-#groupForm input {
-  padding: 6px 8px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: none;
-  margin-top: 4px;
+#createRoomForm input,
+#joinRoomForm input {
   width: 100%;
-  box-sizing: border-box;
+  padding: 8px;
+  margin-top: 6px;
+  border-radius: 5px;
+  border: 1px solid #555;
+  background: #222;
+  color: #fff;
 }
 
-#groupForm button {
-  margin-top: 12px;
+#createRoomForm button,
+#joinRoomForm button {
   width: 48%;
-  font-size: 14px;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+  background: #FF6F61;
+  transition: 0.2s all;
 }
 
-/* Messages d'erreur / succès pour la room */
-#groupMessage {
-  color: #ffb74d;
-  font-size: 14px;
-  margin-top: 8px;
+#createRoomForm button:hover,
+#joinRoomForm button:hover {
+  background: #FF845F;
 }
 
-/* Centrer les boutons créer/rejoindre ensemble */
-.roomButtons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
+/* Boutons principaux Créer/Rejoindre group */
+#showCreateRoom,
+#showJoinRoom {
+  background: #00FF7F;
+  color: #121212;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
 }
+
+#showCreateRoom:hover,
+#showJoinRoom:hover {
+  background: #33FF99;
+}
+
 
