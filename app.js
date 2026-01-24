@@ -4,6 +4,19 @@
  * Tous droits réservés.
  */
 
+// GROUPE ELEMENTS
+const createGroupBtn = document.getElementById("createGroupBtn");
+const joinGroupBtn = document.getElementById("joinGroupBtn");
+const groupForm = document.getElementById("groupForm");
+const groupIdInput = document.getElementById("groupId");
+const groupPasswordInput = document.getElementById("groupPassword");
+const submitGroupBtn = document.getElementById("submitGroup");
+const cancelGroupBtn = document.getElementById("cancelGroup");
+
+let currentAction = null; // "create" ou "join"
+
+
+
 // ================== ÉLÉMENTS ==================
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
@@ -53,36 +66,56 @@ const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHAN
 socket.onopen = () => console.log("✅ WebSocket connecté");
 
 socket.onmessage = async (event) => {
-  const msg = event.data.toString();
-  console.log("📨 WS reçu :", msg, "| rôle =", role);
+  let data;
 
-  // 🚦 TÉLÉPHONE DÉPART = SONS UNIQUEMENT
-  if (role === "depart" && msg === "START_SEQUENCE" && audioUnlocked) {
-    console.log("🔊 PRÊT");
+  try {
+    data = JSON.parse(event.data.toString());
+  } catch {
+    console.log("📨 WS reçu (raw) :", event.data, "| rôle =", role);
 
-    soundReady.currentTime = 0;
-    soundReady.play().catch(()=>{});
+    // 🚦 Ancien comportement pour START_SEQUENCE / GO_NOW
+    if (role === "depart" && event.data === "START_SEQUENCE" && audioUnlocked) {
+      console.log("🔊 PRÊT");
 
-    const delay = 1500 + Math.random() * 1000;
+      soundReady.currentTime = 0;
+      soundReady.play().catch(()=>{});
 
-    setTimeout(() => {
-      console.log("🔊 GO");
-      soundGo.currentTime = 0;
-      soundGo.play().catch(()=>{});
-      socket.send("GO_NOW");
-    }, delay);
+      const delay = 1500 + Math.random() * 1000;
+
+      setTimeout(() => {
+        console.log("🔊 GO");
+        soundGo.currentTime = 0;
+        soundGo.play().catch(()=>{});
+        socket.send("GO_NOW");
+      }, delay);
+    }
+
+    if (role === "arrivee" && event.data === "GO_NOW") {
+      console.log("⏱️ GO → chrono");
+
+      startTime = performance.now();
+      timerInterval = setInterval(updateTime, 10);
+      captureLoop = setInterval(captureFrame, 1000 / FPS);
+    }
+
+    return; // on sort si ce n'est pas un JSON
   }
 
+  // ================= Gestion JSON =================
+  if (data.success) {
+    console.log("✅", data.success);
+    // cacher le formulaire si création/jointure de room OK
+    groupForm.classList.add("hidden");
 
-  // 🏁 TÉLÉPHONE ARRIVÉE = CHRONO UNIQUEMENT
-  if (role === "arrivee" && msg === "GO_NOW") {
-    console.log("⏱️ GO → chrono");
+    // Afficher les boutons départ/arrivée pour continuer le chrono
+    roleSelect.classList.remove("hidden");
+  }
 
-    startTime = performance.now();
-    timerInterval = setInterval(updateTime, 10);
-    captureLoop = setInterval(captureFrame, 1000 / FPS);
+  if (data.error) {
+    alert("❌ " + data.error);
   }
 };
+
 
 
 // ================== CAMÉRA ==================
@@ -362,4 +395,51 @@ function sendWS(type, payload = {}) {
   if (!currentRoom) return console.warn("Room non définie");
   socket.send(JSON.stringify({ room: currentRoom, type, payload }));
 }
+
+
+createGroupBtn.onclick = () => {
+  currentAction = "create";
+  groupForm.classList.remove("hidden");
+};
+
+joinGroupBtn.onclick = () => {
+  currentAction = "join";
+  groupForm.classList.remove("hidden");
+};
+
+cancelGroupBtn.onclick = () => {
+  groupForm.classList.add("hidden");
+  groupIdInput.value = "";
+  groupPasswordInput.value = "";
+};
+
+
+submitGroupBtn.onclick = () => {
+  const roomId = groupIdInput.value.trim();
+  const password = groupPasswordInput.value.trim();
+
+  if (!roomId || !password) {
+    alert("Veuillez remplir l'ID et le mot de passe !");
+    return;
+  }
+
+  if (!/^\d+$/.test(password)) {
+    alert("Le mot de passe doit contenir uniquement des chiffres !");
+    return;
+  }
+
+  if (currentAction === "create") {
+    socket.send(JSON.stringify({
+      type: "CREATE_ROOM",
+      roomId,
+      password
+    }));
+  } else if (currentAction === "join") {
+    socket.send(JSON.stringify({
+      type: "JOIN_ROOM",
+      roomId,
+      password
+    }));
+  }
+};
 
