@@ -48,7 +48,7 @@ const soundGo = new Audio("go.mp3");
 soundGo.load();
 
 // ================== WEBSOCKET ==================
-const socket = new WebSocket("ws://192.168.0.48:8080"); // 🔴 CHANGE L'IP
+const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHANGE L'IP
 
 socket.onopen = () => console.log("✅ WebSocket connecté");
 
@@ -362,3 +362,4 @@ function sendWS(type, payload = {}) {
   if (!currentRoom) return console.warn("Room non définie");
   socket.send(JSON.stringify({ room: currentRoom, type, payload }));
 }
+
