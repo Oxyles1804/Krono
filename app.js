@@ -4,16 +4,131 @@
  * Tous droits réservés.
  */
 
-// GROUPE ELEMENTS
-const createGroupBtn = document.getElementById("createGroupBtn");
-const joinGroupBtn = document.getElementById("joinGroupBtn");
-const groupForm = document.getElementById("groupForm");
-const groupIdInput = document.getElementById("groupId");
-const groupPasswordInput = document.getElementById("groupPassword");
-const submitGroupBtn = document.getElementById("submitGroup");
-const cancelGroupBtn = document.getElementById("cancelGroup");
+// ================== GROUPE ELEMENTS ==================
+const showCreateRoomBtn = document.getElementById("showCreateRoom");
+const showJoinRoomBtn = document.getElementById("showJoinRoom");
+const createRoomForm = document.getElementById("createRoomForm");
+const joinRoomForm = document.getElementById("joinRoomForm");
+const createRoomIdInput = document.getElementById("createRoomId");
+const createRoomPasswordInput = document.getElementById("createRoomPassword");
+const joinRoomIdInput = document.getElementById("joinRoomId");
+const joinRoomPasswordInput = document.getElementById("joinRoomPassword");
+const submitCreateRoom = document.getElementById("submitCreateRoom");
+const submitJoinRoom = document.getElementById("submitJoinRoom");
+const cancelCreateRoom = document.getElementById("cancelCreateRoom");
+const cancelJoinRoom = document.getElementById("cancelJoinRoom");
 
-let currentAction = null; // "create" ou "join"
+let currentRoom = null; // room active
+
+// ======= Afficher le formulaire création =======
+showCreateRoomBtn.onclick = () => {
+  createRoomForm.classList.remove("hidden");
+  joinRoomForm.classList.add("hidden");
+  showCreateRoomBtn.classList.add("hidden");
+  showJoinRoomBtn.classList.add("hidden");
+};
+
+// ======= Afficher le formulaire rejoindre =======
+showJoinRoomBtn.onclick = () => {
+  joinRoomForm.classList.remove("hidden");
+  createRoomForm.classList.add("hidden");
+  showCreateRoomBtn.classList.add("hidden");
+  showJoinRoomBtn.classList.add("hidden");
+};
+
+// ======= Annuler création =======
+cancelCreateRoom.onclick = () => {
+  createRoomForm.classList.add("hidden");
+  showCreateRoomBtn.classList.remove("hidden");
+  showJoinRoomBtn.classList.remove("hidden");
+};
+
+// ======= Annuler rejoindre =======
+cancelJoinRoom.onclick = () => {
+  joinRoomForm.classList.add("hidden");
+  showCreateRoomBtn.classList.remove("hidden");
+  showJoinRoomBtn.classList.remove("hidden");
+};
+
+// ======= Soumettre création =======
+submitCreateRoom.onclick = () => {
+  const roomId = createRoomIdInput.value.trim();
+  const password = createRoomPasswordInput.value.trim();
+
+  if (!roomId || !password) return alert("Remplissez ID et mot de passe !");
+  if (!/^\d+$/.test(password)) return alert("Le mot de passe doit être uniquement des chiffres !");
+
+  socket.send(JSON.stringify({
+    type: "CREATE_ROOM",
+    roomId,
+    password
+  }));
+
+  currentRoom = roomId;
+};
+
+// ======= Soumettre rejoindre =======
+submitJoinRoom.onclick = () => {
+  const roomId = joinRoomIdInput.value.trim();
+  const password = joinRoomPasswordInput.value.trim();
+
+  if (!roomId || !password) return alert("Remplissez ID et mot de passe !");
+  if (!/^\d+$/.test(password)) return alert("Le mot de passe doit être uniquement des chiffres !");
+
+  socket.send(JSON.stringify({
+    type: "JOIN_ROOM",
+    roomId,
+    password
+  }));
+
+  currentRoom = roomId;
+};
+
+// ======= Gestion succès / erreur WebSocket =======
+// ================== WEBSOCKET ==================
+const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHANGE L'IP
+
+socket.onopen = () => console.log("✅ WebSocket connecté");
+socket.onmessage = (event) => {
+  let data;
+  try {
+    data = JSON.parse(event.data.toString());
+  } catch {
+    // Ancien comportement pour START_SEQUENCE / GO_NOW
+    if (role === "depart" && event.data === "START_SEQUENCE" && audioUnlocked) {
+      const delay = 1500 + Math.random() * 1000;
+      soundReady.currentTime = 0;
+      soundReady.play().catch(()=>{});
+      setTimeout(() => {
+        soundGo.currentTime = 0;
+        soundGo.play().catch(()=>{});
+        socket.send("GO_NOW");
+      }, delay);
+    }
+    if (role === "arrivee" && event.data === "GO_NOW") {
+      startTime = performance.now();
+      timerInterval = setInterval(updateTime, 10);
+      captureLoop = setInterval(captureFrame, 1000 / FPS);
+    }
+    return;
+  }
+
+  if (data.success) {
+    console.log("✅", data.success);
+    createRoomForm.classList.add("hidden");
+    joinRoomForm.classList.add("hidden");
+    showCreateRoomBtn.classList.add("hidden");
+    showJoinRoomBtn.classList.add("hidden");
+
+    // Afficher le menu rôle départ/arrivée
+    roleSelect.classList.remove("hidden");
+  }
+
+  if (data.error) {
+    alert("❌ " + data.error);
+  }
+};
+
 
 
 
@@ -60,61 +175,6 @@ const soundReady = new Audio("ready.mp3");
 const soundGo = new Audio("go.mp3");
 soundGo.load();
 
-// ================== WEBSOCKET ==================
-const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHANGE L'IP
-
-socket.onopen = () => console.log("✅ WebSocket connecté");
-
-socket.onmessage = async (event) => {
-  let data;
-
-  try {
-    data = JSON.parse(event.data.toString());
-  } catch {
-    console.log("📨 WS reçu (raw) :", event.data, "| rôle =", role);
-
-    // 🚦 Ancien comportement pour START_SEQUENCE / GO_NOW
-    if (role === "depart" && event.data === "START_SEQUENCE" && audioUnlocked) {
-      console.log("🔊 PRÊT");
-
-      soundReady.currentTime = 0;
-      soundReady.play().catch(()=>{});
-
-      const delay = 1500 + Math.random() * 1000;
-
-      setTimeout(() => {
-        console.log("🔊 GO");
-        soundGo.currentTime = 0;
-        soundGo.play().catch(()=>{});
-        socket.send("GO_NOW");
-      }, delay);
-    }
-
-    if (role === "arrivee" && event.data === "GO_NOW") {
-      console.log("⏱️ GO → chrono");
-
-      startTime = performance.now();
-      timerInterval = setInterval(updateTime, 10);
-      captureLoop = setInterval(captureFrame, 1000 / FPS);
-    }
-
-    return; // on sort si ce n'est pas un JSON
-  }
-
-  // ================= Gestion JSON =================
-  if (data.success) {
-    console.log("✅", data.success);
-    // cacher le formulaire si création/jointure de room OK
-    groupForm.classList.add("hidden");
-
-    // Afficher les boutons départ/arrivée pour continuer le chrono
-    roleSelect.classList.remove("hidden");
-  }
-
-  if (data.error) {
-    alert("❌ " + data.error);
-  }
-};
 
 
 
@@ -378,109 +438,6 @@ forward1.onclick = () => {
 
 
 
-let currentRoom = null;
-
-// Choisir ou créer la room
-document.getElementById("joinRoom").onclick = () => {
-  const roomInput = document.getElementById("roomName").value.trim();
-  if (!roomInput) return alert("Entrez un nom de groupe");
-
-  currentRoom = roomInput;
-  document.getElementById("roomSelect").classList.add("hidden");
-  console.log("📦 Rejoint la room:", currentRoom);
-};
-
-
-function sendWS(type, payload = {}) {
-  if (!currentRoom) return console.warn("Room non définie");
-  socket.send(JSON.stringify({ room: currentRoom, type, payload }));
-}
-
-
-createGroupBtn.onclick = () => {
-  currentAction = "create";
-  groupForm.classList.remove("hidden");
-};
-
-joinGroupBtn.onclick = () => {
-  currentAction = "join";
-  groupForm.classList.remove("hidden");
-};
-
-cancelGroupBtn.onclick = () => {
-  groupForm.classList.add("hidden");
-  groupIdInput.value = "";
-  groupPasswordInput.value = "";
-};
-
-
-submitGroupBtn.onclick = () => {
-  const roomId = groupIdInput.value.trim();
-  const password = groupPasswordInput.value.trim();
-
-  if (!roomId || !password) {
-    alert("Veuillez remplir l'ID et le mot de passe !");
-    return;
-  }
-
-  if (!/^\d+$/.test(password)) {
-    alert("Le mot de passe doit contenir uniquement des chiffres !");
-    return;
-  }
-
-  if (currentAction === "create") {
-    socket.send(JSON.stringify({
-      type: "CREATE_ROOM",
-      roomId,
-      password
-    }));
-  } else if (currentAction === "join") {
-    socket.send(JSON.stringify({
-      type: "JOIN_ROOM",
-      roomId,
-      password
-    }));
-  }
-};
-
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  const showCreateRoomBtn = document.getElementById("showCreateRoom");
-  const showJoinRoomBtn = document.getElementById("showJoinRoom");
-  const createRoomForm = document.getElementById("createRoomForm");
-  const joinRoomForm = document.getElementById("joinRoomForm");
-
-  // Afficher le formulaire création
-  showCreateRoomBtn.onclick = () => {
-    createRoomForm.classList.remove("hidden");
-    joinRoomForm.classList.add("hidden");
-    showCreateRoomBtn.classList.add("hidden");
-    showJoinRoomBtn.classList.add("hidden");
-  };
-
-  // Afficher le formulaire rejoindre
-  showJoinRoomBtn.onclick = () => {
-    joinRoomForm.classList.remove("hidden");
-    createRoomForm.classList.add("hidden");
-    showCreateRoomBtn.classList.add("hidden");
-    showJoinRoomBtn.classList.add("hidden");
-  };
-
-  // Annuler création
-  document.getElementById("cancelCreateRoom").onclick = () => {
-    createRoomForm.classList.add("hidden");
-    showCreateRoomBtn.classList.remove("hidden");
-    showJoinRoomBtn.classList.remove("hidden");
-  };
-
-  // Annuler rejoindre
-  document.getElementById("cancelJoinRoom").onclick = () => {
-    joinRoomForm.classList.add("hidden");
-    showCreateRoomBtn.classList.remove("hidden");
-    showJoinRoomBtn.classList.remove("hidden");
-  };
-});
 
 
 
