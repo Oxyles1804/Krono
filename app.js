@@ -445,39 +445,43 @@ submitGroupBtn.onclick = () => {
 
 
 
-const showCreateRoomBtn = document.getElementById("showCreateRoom");
-const showJoinRoomBtn = document.getElementById("showJoinRoom");
-const createRoomForm = document.getElementById("createRoomForm");
-const joinRoomForm = document.getElementById("joinRoomForm");
+document.addEventListener("DOMContentLoaded", () => {
+  const showCreateRoomBtn = document.getElementById("showCreateRoom");
+  const showJoinRoomBtn = document.getElementById("showJoinRoom");
+  const createRoomForm = document.getElementById("createRoomForm");
+  const joinRoomForm = document.getElementById("joinRoomForm");
 
-// Afficher le formulaire création
-showCreateRoomBtn.onclick = () => {
-  createRoomForm.classList.remove("hidden");
-  joinRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.add("hidden");
-  showJoinRoomBtn.classList.add("hidden");
-};
+  // Afficher le formulaire création
+  showCreateRoomBtn.onclick = () => {
+    createRoomForm.classList.remove("hidden");
+    joinRoomForm.classList.add("hidden");
+    showCreateRoomBtn.classList.add("hidden");
+    showJoinRoomBtn.classList.add("hidden");
+  };
 
-// Afficher le formulaire rejoindre
-showJoinRoomBtn.onclick = () => {
-  joinRoomForm.classList.remove("hidden");
-  createRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.add("hidden");
-  showJoinRoomBtn.classList.add("hidden");
-};
+  // Afficher le formulaire rejoindre
+  showJoinRoomBtn.onclick = () => {
+    joinRoomForm.classList.remove("hidden");
+    createRoomForm.classList.add("hidden");
+    showCreateRoomBtn.classList.add("hidden");
+    showJoinRoomBtn.classList.add("hidden");
+  };
 
-// Annuler création
-document.getElementById("cancelCreateRoom").onclick = () => {
-  createRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.remove("hidden");
-  showJoinRoomBtn.classList.remove("hidden");
-};
+  // Annuler création
+  document.getElementById("cancelCreateRoom").onclick = () => {
+    createRoomForm.classList.add("hidden");
+    showCreateRoomBtn.classList.remove("hidden");
+    showJoinRoomBtn.classList.remove("hidden");
+  };
 
-// Annuler rejoindre
-document.getElementById("cancelJoinRoom").onclick = () => {
-  joinRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.remove("hidden");
-  showJoinRoomBtn.classList.remove("hidden");
-};
+  // Annuler rejoindre
+  document.getElementById("cancelJoinRoom").onclick = () => {
+    joinRoomForm.classList.add("hidden");
+    showCreateRoomBtn.classList.remove("hidden");
+    showJoinRoomBtn.classList.remove("hidden");
+  };
+});
+
+
 
 
