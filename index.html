@@ -69,17 +69,26 @@ Version : 1.0
   <tbody></tbody>
 </table>
 
-<div id="groupControls">
-  <button id="createGroupBtn">Créer un groupe</button>
-  <button id="joinGroupBtn">Rejoindre un groupe</button>
-
-  <div id="groupForm" class="hidden">
-    <input type="text" id="groupId" placeholder="ID du groupe" />
-    <input type="text" id="groupPassword" placeholder="Mot de passe (chiffres uniquement)" />
-    <button id="submitGroup">Valider</button>
-    <button id="cancelGroup">Annuler</button>
-  </div>
+<!-- Formulaire Création de groupe -->
+<div id="createRoomForm" class="hidden">
+  <input type="text" id="newRoomId" placeholder="ID du groupe">
+  <input type="text" id="newRoomPassword" placeholder="Mot de passe">
+  <button id="createRoomBtn">Valider</button>
+  <button id="cancelCreateRoom">Annuler</button>
 </div>
+
+<!-- Formulaire Rejoindre un groupe -->
+<div id="joinRoomForm" class="hidden">
+  <input type="text" id="joinRoomId" placeholder="ID du groupe">
+  <input type="text" id="joinRoomPassword" placeholder="Mot de passe">
+  <button id="joinRoomBtn">Valider</button>
+  <button id="cancelJoinRoom">Annuler</button>
+</div>
+
+<!-- Boutons principaux -->
+<button id="showCreateRoom">Créer un groupe</button>
+<button id="showJoinRoom">Rejoindre un groupe</button>
+
 
 
 <footer style="margin-top:20px; font-size:0.8em; color:#888;">
@@ -90,4 +99,5 @@ Version : 1.0
   <script src="app.js"></script>
 </body>
 </html>
+
 
