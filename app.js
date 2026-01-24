@@ -1,6 +1,7 @@
 /*!
  * Sprint Chrono – Krono
  * © 2026 Ilyes ECHAOUI
+ * Tous droits réservés.
  */
 
 // ================== ÉLÉMENTS ==================
@@ -12,35 +13,30 @@ const timeDisplay = document.getElementById("time");
 const startBtn = document.getElementById("start");
 const stopBtn = document.getElementById("stop");
 
+
+
+////////////////////////////////////
 const slider = document.getElementById("slider");
-const goOffset = 200;
+const goOffset = 200; // décalage en ms, positif = chrono démarre après le son, négatif = avant le son
 
 const markBtn = document.getElementById("mark");
 const resultsTable = document.querySelector("#results tbody");
 
-// Déplacement frames
-const FRAME_STEP = 1;
+// Pour les decalages frames
+const FRAME_STEP = 1; // ← 1 frame
 const back1 = document.getElementById("back1");
 const forward1 = document.getElementById("forward1");
 const frameControls = document.getElementById("frameControls");
+////////////////////////////////////
 
-// Rôles
+
+
 const roleDepartBtn = document.getElementById("roleDepart");
 const roleArriveeBtn = document.getElementById("roleArrivee");
 const roleSelect = document.getElementById("roleSelect");
 
-// Audio unlock
 const unlockBtn = document.getElementById("unlockAudio");
 let audioUnlocked = false;
-
-const roomMenu = document.getElementById("roomMenu");
-const roomNameInput = document.getElementById("roomName");
-const roomPasswordInput = document.getElementById("roomPassword");
-const createRoomBtn = document.getElementById("createRoomBtn");
-const joinRoomBtn = document.getElementById("joinRoomBtn");
-
-let currentRoom = null;
-let currentRoomPassword = null;
 
 
 // ================== RÔLE ==================
@@ -51,57 +47,43 @@ const soundReady = new Audio("ready.mp3");
 const soundGo = new Audio("go.mp3");
 soundGo.load();
 
-// ================== ROOM ==================
-let currentRoom = null;
-let currentRoomPassword = null;
-
 // ================== WEBSOCKET ==================
-const socket = new WebSocket("wss://krono-ws-server.onrender.com");
+const socket = new WebSocket("ws://192.168.0.48:8080"); // 🔴 CHANGE L'IP
 
 socket.onopen = () => console.log("✅ WebSocket connecté");
 
 socket.onmessage = async (event) => {
-  try {
-    const data = JSON.parse(event.data); // { type, payload }
+  const msg = event.data.toString();
+  console.log("📨 WS reçu :", msg, "| rôle =", role);
 
-    // Message pour notre room seulement
-    if (!data.room || data.room !== currentRoom) return;
+  // 🚦 TÉLÉPHONE DÉPART = SONS UNIQUEMENT
+  if (role === "depart" && msg === "START_SEQUENCE" && audioUnlocked) {
+    console.log("🔊 PRÊT");
 
-    // 🚦 Téléphone départ
-    if (role === "depart" && data.type === "START_SEQUENCE" && audioUnlocked) {
-      console.log("🔊 PRÊT");
+    soundReady.currentTime = 0;
+    soundReady.play().catch(()=>{});
 
-      soundReady.currentTime = 0;
-      soundReady.play().catch(()=>{});
+    const delay = 1500 + Math.random() * 1000;
 
-      const delay = 1500 + Math.random() * 1000;
-      setTimeout(() => {
-        console.log("🔊 GO");
-        soundGo.currentTime = 0;
-        soundGo.play().catch(()=>{});
-        sendToRoom("GO_NOW");
-      }, delay);
-    }
+    setTimeout(() => {
+      console.log("🔊 GO");
+      soundGo.currentTime = 0;
+      soundGo.play().catch(()=>{});
+      socket.send("GO_NOW");
+    }, delay);
+  }
 
-    // 🏁 Téléphone arrivée
-    if (role === "arrivee" && data.type === "GO_NOW") {
-      console.log("⏱️ GO → chrono");
-      startTime = performance.now();
-      timerInterval = setInterval(updateTime, 10);
-      captureLoop = setInterval(captureFrame, 1000 / FPS);
-    }
 
-    // Gestion erreurs mot de passe
-    if (data.type === "ERROR") alert(data.payload);
+  // 🏁 TÉLÉPHONE ARRIVÉE = CHRONO UNIQUEMENT
+  if (role === "arrivee" && msg === "GO_NOW") {
+    console.log("⏱️ GO → chrono");
 
-  } catch(e) { console.error("Erreur WS :", e); }
+    startTime = performance.now();
+    timerInterval = setInterval(updateTime, 10);
+    captureLoop = setInterval(captureFrame, 1000 / FPS);
+  }
 };
 
-// Fonction pour envoyer un message JSON au serveur pour notre room
-function sendToRoom(type, payload = null) {
-  if (!currentRoom || !currentRoomPassword) return;
-  socket.send(JSON.stringify({ room: currentRoom, password: currentRoomPassword, type, payload }));
-}
 
 // ================== CAMÉRA ==================
 let stream = null;
@@ -115,7 +97,10 @@ let frameTimes = [];
 let currentFrame = 0;
 let results = [];
 
+///////////////////////
+//cacher le canvas au début
 canvas.classList.add("hidden");
+
 
 async function startCamera() {
   stream = await navigator.mediaDevices.getUserMedia({
@@ -124,28 +109,37 @@ async function startCamera() {
   });
   video.srcObject = stream;
   await waitForVideoReady();
+  ///////////////////////
 }
 
+// Attendre que la vidéo soit ready et ajuster le canvas
 function waitForVideoReady() {
   return new Promise(resolve => {
     if (video.readyState >= 2) {
+      // La vidéo est déjà prête, on ajuste le canvas
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       resolve();
     } else {
       video.onloadeddata = () => {
+        // Vidéo prête, on ajuste le canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         resolve();
       };
     }
   });
+}////////////////////////////////
+
+function resizeCanvas() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 }
 
 // ================== CHRONO ==================
 function updateTime() {
-  const t = (performance.now() - startTime) / 1000;
-  timeDisplay.textContent = t.toFixed(3);
+    const t = (performance.now() - startTime) / 1000;
+    timeDisplay.textContent = t.toFixed(3);
 }
 
 function captureFrame() {
@@ -154,6 +148,7 @@ function captureFrame() {
   frameTimes.push((performance.now() - startTime) / 1000);
 }
 
+// ======== Affichage des frames ========
 function showFrame() {
   if (!frames[currentFrame]) return;
   ctx.putImageData(frames[currentFrame], 0, 0);
@@ -161,21 +156,29 @@ function showFrame() {
   slider.value = currentFrame;
 }
 
-// ================== RÉSULTATS ==================
+
+// ======== Rendu des resultats ========
 function renderResults() {
   resultsTable.innerHTML = "";
 
   results.forEach((res, index) => {
     const row = document.createElement("tr");
+
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>${res.time.toFixed(3)}</td>
-      <td><input type="text" value="${res.name}" data-id="${res.id}"></td>
-      <td><button data-id="${res.id}">❌</button></td>
+      <td>
+        <input type="text" value="${res.name}" data-id="${res.id}">
+      </td>
+      <td>
+        <button data-id="${res.id}">❌</button>
+      </td>
     `;
+
     resultsTable.appendChild(row);
   });
 
+  // Suppression
   resultsTable.querySelectorAll("button").forEach(btn => {
     btn.onclick = () => {
       const id = Number(btn.dataset.id);
@@ -184,6 +187,7 @@ function renderResults() {
     };
   });
 
+  // Renommage
   resultsTable.querySelectorAll("input").forEach(input => {
     input.onchange = () => {
       const id = Number(input.dataset.id);
@@ -193,7 +197,9 @@ function renderResults() {
   });
 }
 
-// ================== RÔLES ==================
+
+
+// ================== RÔLES UI ==================
 roleDepartBtn.onclick = () => {
   role = "depart";
   roleSelect.classList.add("hidden");
@@ -203,12 +209,14 @@ roleDepartBtn.onclick = () => {
   timeDisplay.textContent = "📍 DÉPART";
 };
 
+
 roleArriveeBtn.onclick = async () => {
   role = "arrivee";
   roleSelect.classList.add("hidden");
   startBtn.disabled = false;
   showRole();
-
+  console.log("🏁 Mode ARRIVÉE actif");
+  // DEMANDE LA CAMERA IMMÉDIATEMENT
   if (!stream) {
     console.log("📹 Demande d'accès à la caméra...");
     await startCamera();
@@ -218,41 +226,30 @@ roleArriveeBtn.onclick = async () => {
   canvas.classList.add("hidden");
 };
 
-// ================== CREATE / JOIN ROOM ==================
-const createRoomBtn = document.getElementById("createRoom");
-const roomNameInput = document.getElementById("roomName");
-const roomPasswordInput = document.getElementById("roomPassword");
-
-createRoomBtn.onclick = () => {
-  const name = roomNameInput.value.trim();
-  const pass = roomPasswordInput.value.trim();
-
-  if (!/^[a-zA-Z0-9]+$/.test(name)) return alert("Nom de room invalide (lettres et chiffres seulement)");
-  if (!/^[a-zA-Z0-9]{4,}$/.test(pass)) return alert("Mot de passe invalide (min 4 caractères)");
-
-  currentRoom = name;
-  currentRoomPassword = pass;
-
-  roleSelect.classList.add("hidden");
-  console.log("📦 Room créée/rejointe :", currentRoom);
-};
 
 // ================== START ==================
 startBtn.onclick = async () => {
-  if (role !== "arrivee") return;
+  if (role !== "arrivee") {
+    console.warn("⛔ START ignoré (pas ARRIVÉE)");
+    return;
+  }
 
   results = [];
   resultsTable.innerHTML = "";
 
-  video.classList.remove("hidden");
-  canvas.classList.add("hidden");
-  slider.classList.add("hidden");
-  markBtn.classList.add("hidden");
-  document.getElementById("results").classList.add("hidden");
+  if (role === "arrivee") {    
+    video.classList.remove("hidden");
+    canvas.classList.add("hidden");
+    slider.classList.add("hidden");
+    markBtn.classList.add("hidden");
+    document.getElementById("results").classList.add("hidden");
 
-  sendToRoom("START_SEQUENCE");
-  console.log("📩 START_SEQUENCE envoyé au départ");
+    // Envoyer signal au téléphone départ
+    socket.send("START_SEQUENCE");
+    console.log("📩 START_SEQUENCE envoyé au départ");
+  }
 };
+
 
 // ================== STOP ==================
 stopBtn.onclick = () => {
@@ -260,7 +257,7 @@ stopBtn.onclick = () => {
   clearInterval(captureLoop);
 
   if (stream) {
-    stream.getTracks().forEach(t => t.stop());
+    stream.getTracks().forEach((t) => t.stop());
     stream = null;
   }
 
@@ -270,83 +267,98 @@ stopBtn.onclick = () => {
   markBtn.classList.remove("hidden");
   document.getElementById("results").classList.remove("hidden");
 
+  // Configurer slider
   slider.max = frames.length - 1;
   slider.value = 0;
   currentFrame = 0;
 
-  if (frames.length > 0) showFrame();
+  if(frames.length>0) showFrame();
+
   console.log("🛑 Chrono stoppé");
 };
 
-// ================== AUDIO UNLOCK ==================
+
+function showRole() {
+  timeDisplay.textContent =
+    role === "depart" ? "📍 DÉPART" : "🏁 ARRIVÉE";
+}
+
+
 unlockBtn.onclick = async () => {
   try {
-    await soundReady.play(); soundReady.pause(); soundReady.currentTime = 0;
-    await soundGo.play(); soundGo.pause(); soundGo.currentTime = 0;
+    await soundReady.play();
+    soundReady.pause();
+    soundReady.currentTime = 0;
+
+    await soundGo.play();
+    soundGo.pause();
+    soundGo.currentTime = 0;
+
     audioUnlocked = true;
     unlockBtn.textContent = "✅ Son activé";
     unlockBtn.disabled = true;
+
     console.log("🔓 Audio déverrouillé sur téléphone départ");
   } catch (e) {
     console.error("Erreur audio unlock", e);
   }
 };
 
-// ================== SLIDER ==================
+
+
+
+// ======== Slider ========
 slider.oninput = () => {
   currentFrame = Number(slider.value);
   showFrame();
 };
 
-// ================== MARQUAGE ==================
+
+
+
+// ======== Marquage des temps ========
 markBtn.onclick = () => {
   if (!frameTimes[currentFrame]) return;
+
   const time = frameTimes[currentFrame];
 
   results.push({
-    id: Date.now(),
-    time,
+    id: Date.now(),              // identifiant unique
+    time: time,                  // temps exact
     name: "Athlète " + (results.length + 1)
   });
+
   renderResults();
 };
 
-// ================== DÉPLACEMENT FRAMES ==================
-back1.onclick = () => { currentFrame = Math.max(0, currentFrame - FRAME_STEP); showFrame(); };
-forward1.onclick = () => { currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP); showFrame(); };
 
-function showRole() { timeDisplay.textContent = role === "depart" ? "📍 DÉPART" : "🏁 ARRIVÉE"; }
-
-
-createRoomBtn.onclick = () => {
-  const name = roomNameInput.value.trim();
-  const pass = roomPasswordInput.value.trim();
-  if(!/^[a-zA-Z0-9]+$/.test(name)) return alert("Nom de room invalide");
-  if(!/^[a-zA-Z0-9]{4,}$/.test(pass)) return alert("Mot de passe invalide (min 4 caractères)");
-  currentRoom = name;
-  currentRoomPassword = pass;
-  roomMenu.style.display = "none";
-  roleSelect.style.display = "block";
+// Bouton de decalage frames
+back1.onclick = () => {
+  currentFrame = Math.max(0, currentFrame - FRAME_STEP);
+  showFrame();
 };
 
-joinRoomBtn.onclick = () => {
-  const name = roomNameInput.value.trim();
-  const pass = roomPasswordInput.value.trim();
-  if(!name || !pass) return alert("Remplis tous les champs");
-  currentRoom = name;
-  currentRoomPassword = pass;
-  roomMenu.style.display = "none";
-  roleSelect.style.display = "block";
+forward1.onclick = () => {
+  currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
+  showFrame();
 };
 
 
-function sendToRoom(type, payload=null){
-    if(!currentRoom || !currentRoomPassword) return;
-    socket.send(JSON.stringify({
-        room: currentRoom,
-        password: currentRoomPassword,
-        type: type,
-        payload: payload
-    }));
+
+let currentRoom = null;
+
+// Choisir ou créer la room
+document.getElementById("joinRoom").onclick = () => {
+  const roomInput = document.getElementById("roomName").value.trim();
+  if (!roomInput) return alert("Entrez un nom de groupe");
+
+  currentRoom = roomInput;
+  document.getElementById("roomSelect").classList.add("hidden");
+  console.log("📦 Rejoint la room:", currentRoom);
+};
+
+
+function sendWS(type, payload = {}) {
+  if (!currentRoom) return console.warn("Room non définie");
+  socket.send(JSON.stringify({ room: currentRoom, type, payload }));
 }
-
