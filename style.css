@@ -189,7 +189,7 @@ input[type="text"] {
   padding: 15px;
   border-radius: 8px;
   margin: 10px auto;
-  display: none; /* hidden par défaut, géré par JS */
+  /*display: none; /* hidden par défaut, géré par JS */
   max-width: 320px;
   text-align: left;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -241,5 +241,6 @@ input[type="text"] {
 #showJoinRoom:hover {
   background: #33FF99;
 }
+
 
 
