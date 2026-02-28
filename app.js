@@ -20,6 +20,13 @@ const submitJoinRoom = document.getElementById("submitJoinRoom");
 const cancelCreateRoom = document.getElementById("cancelCreateRoom");
 const cancelJoinRoom = document.getElementById("cancelJoinRoom");
 
+console.log({
+  submitCreateRoom,
+  submitJoinRoom,
+  cancelCreateRoom,
+  cancelJoinRoom
+});
+
 let currentRoom = null; // room active
 
 // ======= Afficher le formulaire création =======
@@ -456,6 +463,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
