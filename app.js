@@ -10,13 +10,13 @@ const showJoinRoomBtn = document.getElementById("showJoinRoom");
 const createRoomForm = document.getElementById("createRoomForm");
 const joinRoomForm = document.getElementById("joinRoomForm");
 
-const createRoomIdInput = document.getElementById("newRoomId");
-const createRoomPasswordInput = document.getElementById("newRoomPassword");
+const createRoomIdInput = document.getElementById("createRoomId");
+const createRoomPasswordInput = document.getElementById("createRoomPassword");
 const joinRoomIdInput = document.getElementById("joinRoomId");
 const joinRoomPasswordInput = document.getElementById("joinRoomPassword");
 
-const submitCreateRoom = document.getElementById("createRoomBtn");
-const submitJoinRoom = document.getElementById("joinRoomBtn");
+const submitCreateRoom = document.getElementById("submitCreateRoom");
+const submitJoinRoom = document.getElementById("submitJoinRoom");
 const cancelCreateRoom = document.getElementById("cancelCreateRoom");
 const cancelJoinRoom = document.getElementById("cancelJoinRoom");
 
@@ -456,6 +456,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
