@@ -63,45 +63,57 @@ socket.onopen = () => console.log("✅ WebSocket connecté");
 
 socket.onmessage = (event) => {
   let data;
+
   try {
-    data = JSON.parse(event.data.toString());
+    data = JSON.parse(event.data);
   } catch {
-    // Ancien comportement pour START_SEQUENCE / GO_NOW
-    if (role === "depart" && event.data === "START_SEQUENCE" && audioUnlocked) {
-      const delay = 1500 + Math.random() * 1000;
-      soundReady.currentTime = 0;
-      soundReady.play().catch(()=>{});
-      setTimeout(() => {
-        soundGo.currentTime = 0;
-        soundGo.play().catch(()=>{});
-        socket.send("GO_NOW");
-      }, delay);
-    }
-    if (role === "arrivee" && event.data === "GO_NOW") {
-      startTime = performance.now();
-      timerInterval = setInterval(updateTime, 10);
-      captureLoop = setInterval(captureFrame, 1000 / FPS);
-    }
+    console.error("Message non JSON reçu :", event.data);
     return;
   }
 
+  // ===== SUCCESS ROOM =====
   if (data.success) {
-    console.log("✅", data.success);
-    // cacher les formulaires et les boutons principaux
     createRoomForm.classList.add("hidden");
     joinRoomForm.classList.add("hidden");
     showCreateRoomBtn.classList.add("hidden");
     showJoinRoomBtn.classList.add("hidden");
 
-    // Afficher le menu rôle départ/arrivée
     roleSelect.classList.remove("hidden");
 
-    // On met currentRoom seulement si création/jointure réussie
     if (data.roomId) currentRoom = data.roomId;
   }
 
   if (data.error) {
     alert("❌ " + data.error);
+  }
+
+  // ===== START_SEQUENCE =====
+  if (data.type === "START_SEQUENCE") {
+    if (role === "depart" && audioUnlocked) {
+      const delay = 1500 + Math.random() * 1000;
+
+      soundReady.currentTime = 0;
+      soundReady.play().catch(()=>{});
+
+      setTimeout(() => {
+        soundGo.currentTime = 0;
+        soundGo.play().catch(()=>{});
+
+        socket.send(JSON.stringify({
+          type: "GO_NOW"
+        }));
+
+      }, delay);
+    }
+  }
+
+  // ===== GO_NOW =====
+  if (data.type === "GO_NOW") {
+    if (role === "arrivee") {
+      startTime = performance.now();
+      timerInterval = setInterval(updateTime, 10);
+      captureLoop = setInterval(captureFrame, 1000 / FPS);
+    }
   }
 };
 
@@ -344,7 +356,10 @@ startBtn.onclick = async () => {
     document.getElementById("results").classList.add("hidden");
 
     // Envoyer signal au téléphone départ
-    socket.send("START_SEQUENCE");
+    //socket.send("START_SEQUENCE");
+    socket.send(JSON.stringify({
+      type: "START_SEQUENCE"
+    }));
     console.log("📩 START_SEQUENCE envoyé au départ");
   }
 };
@@ -441,6 +456,7 @@ forward1.onclick = () => {
   currentFrame = Math.min(frames.length - 1, currentFrame + FRAME_STEP);
   showFrame();
 };
+
 
 
 
