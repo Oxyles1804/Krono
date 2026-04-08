@@ -4,159 +4,6 @@
  * Tous droits réservés.
  */
 
-// ================== GROUPE ELEMENTS ==================
-const showCreateRoomBtn = document.getElementById("showCreateRoom");
-const showJoinRoomBtn = document.getElementById("showJoinRoom");
-const createRoomForm = document.getElementById("createRoomForm");
-const joinRoomForm = document.getElementById("joinRoomForm");
-
-const createRoomIdInput = document.getElementById("createRoomId");
-const createRoomPasswordInput = document.getElementById("createRoomPassword");
-const joinRoomIdInput = document.getElementById("joinRoomId");
-const joinRoomPasswordInput = document.getElementById("joinRoomPassword");
-
-const submitCreateRoom = document.getElementById("submitCreateRoom");
-const submitJoinRoom = document.getElementById("submitJoinRoom");
-const cancelCreateRoom = document.getElementById("cancelCreateRoom");
-const cancelJoinRoom = document.getElementById("cancelJoinRoom");
-
-console.log({
-  submitCreateRoom,
-  submitJoinRoom,
-  cancelCreateRoom,
-  cancelJoinRoom
-});
-
-let currentRoom = null; // room active
-
-// ======= Afficher le formulaire création =======
-showCreateRoomBtn.onclick = () => {
-  createRoomForm.classList.remove("hidden");
-  joinRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.add("hidden");
-  showJoinRoomBtn.classList.add("hidden");
-};
-
-// ======= Afficher le formulaire rejoindre =======
-showJoinRoomBtn.onclick = () => {
-  joinRoomForm.classList.remove("hidden");
-  createRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.add("hidden");
-  showJoinRoomBtn.classList.add("hidden");
-};
-
-// ======= Annuler création =======
-cancelCreateRoom.onclick = () => {
-  createRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.remove("hidden");
-  showJoinRoomBtn.classList.remove("hidden");
-  createRoomIdInput.value = "";
-  createRoomPasswordInput.value = "";
-};
-
-// ======= Annuler rejoindre =======
-cancelJoinRoom.onclick = () => {
-  joinRoomForm.classList.add("hidden");
-  showCreateRoomBtn.classList.remove("hidden");
-  showJoinRoomBtn.classList.remove("hidden");
-  joinRoomIdInput.value = "";
-  joinRoomPasswordInput.value = "";
-};
-
-// ================== WEBSOCKET ==================
-const socket = new WebSocket("wss://krono-ws-server.onrender.com");
-
-socket.onopen = () => console.log("✅ WebSocket connecté");
-
-socket.onmessage = (event) => {
-  let data;
-
-  try {
-    data = JSON.parse(event.data);
-  } catch {
-    console.error("Message non JSON reçu :", event.data);
-    return;
-  }
-
-  // ===== SUCCESS ROOM =====
-  if (data.success) {
-    createRoomForm.classList.add("hidden");
-    joinRoomForm.classList.add("hidden");
-    showCreateRoomBtn.classList.add("hidden");
-    showJoinRoomBtn.classList.add("hidden");
-
-    roleSelect.classList.remove("hidden");
-
-    if (data.roomId) currentRoom = data.roomId;
-  }
-
-  if (data.error) {
-    alert("❌ " + data.error);
-  }
-
-  // ===== START_SEQUENCE =====
-  if (data.type === "START_SEQUENCE") {
-    if (role === "depart" && audioUnlocked) {
-      const delay = 1500 + Math.random() * 1000;
-
-      soundReady.currentTime = 0;
-      soundReady.play().catch(()=>{});
-
-      setTimeout(() => {
-        soundGo.currentTime = 0;
-        soundGo.play().catch(()=>{});
-
-        socket.send(JSON.stringify({
-          type: "GO_NOW"
-        }));
-
-      }, delay);
-    }
-  }
-
-  // ===== GO_NOW =====
-  if (data.type === "GO_NOW") {
-    if (role === "arrivee") {
-      startTime = performance.now();
-      timerInterval = setInterval(updateTime, 10);
-      captureLoop = setInterval(captureFrame, 1000 / FPS);
-    }
-  }
-};
-
-// ======= Soumettre création =======
-submitCreateRoom.onclick = () => {
-  const roomId = createRoomIdInput.value.trim();
-  const password = createRoomPasswordInput.value.trim();
-
-  if (!roomId || !password) return alert("Remplissez ID et mot de passe !");
-  if (!/^\d+$/.test(password)) return alert("Le mot de passe doit être uniquement des chiffres !");
-
-  socket.send(JSON.stringify({
-    type: "CREATE_ROOM",
-    roomId,
-    password
-  }));
-};
-
-// ======= Soumettre rejoindre =======
-submitJoinRoom.onclick = () => {
-  const roomId = joinRoomIdInput.value.trim();
-  const password = joinRoomPasswordInput.value.trim();
-
-  if (!roomId || !password) return alert("Remplissez ID et mot de passe !");
-  if (!/^\d+$/.test(password)) return alert("Le mot de passe doit être uniquement des chiffres !");
-
-  socket.send(JSON.stringify({
-    type: "JOIN_ROOM",
-    roomId,
-    password
-  }));
-};
-
-
-
-
 // ================== ÉLÉMENTS ==================
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
@@ -200,7 +47,42 @@ const soundReady = new Audio("ready.mp3");
 const soundGo = new Audio("go.mp3");
 soundGo.load();
 
+// ================== WEBSOCKET ==================
+const socket = new WebSocket("wss://krono-ws-server.onrender.com"); // 🔴 CHANGE L'IP
 
+socket.onopen = () => console.log("✅ WebSocket connecté");
+
+socket.onmessage = async (event) => {
+  const msg = event.data.toString();
+  console.log("📨 WS reçu :", msg, "| rôle =", role);
+
+  // 🚦 TÉLÉPHONE DÉPART = SONS UNIQUEMENT
+  if (role === "depart" && msg === "START_SEQUENCE" && audioUnlocked) {
+    console.log("🔊 PRÊT");
+
+    soundReady.currentTime = 0;
+    soundReady.play().catch(()=>{});
+
+    const delay = 1500 + Math.random() * 1000;
+
+    setTimeout(() => {
+      console.log("🔊 GO");
+      soundGo.currentTime = 0;
+      soundGo.play().catch(()=>{});
+      socket.send("GO_NOW");
+    }, delay);
+  }
+
+
+  // 🏁 TÉLÉPHONE ARRIVÉE = CHRONO UNIQUEMENT
+  if (role === "arrivee" && msg === "GO_NOW") {
+    console.log("⏱️ GO → chrono");
+
+    startTime = performance.now();
+    timerInterval = setInterval(updateTime, 10);
+    captureLoop = setInterval(captureFrame, 1000 / FPS);
+  }
+};
 
 
 // ================== CAMÉRA ==================
@@ -363,10 +245,7 @@ startBtn.onclick = async () => {
     document.getElementById("results").classList.add("hidden");
 
     // Envoyer signal au téléphone départ
-    //socket.send("START_SEQUENCE");
-    socket.send(JSON.stringify({
-      type: "START_SEQUENCE"
-    }));
+    socket.send("START_SEQUENCE");
     console.log("📩 START_SEQUENCE envoyé au départ");
   }
 };
@@ -466,11 +345,20 @@ forward1.onclick = () => {
 
 
 
+let currentRoom = null;
+
+// Choisir ou créer la room
+document.getElementById("joinRoom").onclick = () => {
+  const roomInput = document.getElementById("roomName").value.trim();
+  if (!roomInput) return alert("Entrez un nom de groupe");
+
+  currentRoom = roomInput;
+  document.getElementById("roomSelect").classList.add("hidden");
+  console.log("📦 Rejoint la room:", currentRoom);
+};
 
 
-
-
-
-
-
-
+function sendWS(type, payload = {}) {
+  if (!currentRoom) return console.warn("Room non définie");
+  socket.send(JSON.stringify({ room: currentRoom, type, payload }));
+}
