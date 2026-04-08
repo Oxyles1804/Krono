@@ -344,21 +344,3 @@ forward1.onclick = () => {
 };
 
 
-
-let currentRoom = null;
-
-// Choisir ou créer la room
-document.getElementById("joinRoom").onclick = () => {
-  const roomInput = document.getElementById("roomName").value.trim();
-  if (!roomInput) return alert("Entrez un nom de groupe");
-
-  currentRoom = roomInput;
-  document.getElementById("roomSelect").classList.add("hidden");
-  console.log("📦 Rejoint la room:", currentRoom);
-};
-
-
-function sendWS(type, payload = {}) {
-  if (!currentRoom) return console.warn("Room non définie");
-  socket.send(JSON.stringify({ room: currentRoom, type, payload }));
-}
